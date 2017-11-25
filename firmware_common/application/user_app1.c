@@ -136,7 +136,20 @@ State Machine Function Definitions
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
 {
-
+  u32 u32A;
+  if ( !(AT91C_BASE_PIOB ->PIO_PDSR & PB_00_BUTTON1) )
+  {
+    if( AT91C_BASE_PIOB ->PIO_ODSR & PB_18_LED_BLU)
+    {
+      AT91C_BASE_PIOB ->PIO_CODR = PB_18_LED_BLU;
+    }
+    
+    else
+    {
+      AT91C_BASE_PIOB ->PIO_SODR = PB_18_LED_BLU;
+    }
+  }
+ 
 } /* end UserApp1SM_Idle() */
     
 

@@ -68,6 +68,7 @@ void main(void)
   AntInitialize();
   AntApiInitialize();
   SdCardInitialize();
+  AT91C_BASE_PIOB ->PIO_PER = 0x001FE000;
 
   /* Application initialization */
 
@@ -86,7 +87,7 @@ void main(void)
     WATCHDOG_BONE();
     
     /* Drivers */
-    LedUpdate();
+    //LedUpdate();
     ButtonRunActiveState();
     UartRunActiveState();
     TimerRunActiveState(); 
