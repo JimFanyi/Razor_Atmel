@@ -98,6 +98,7 @@ void UserApp1Initialize(void)
     /* The task isn't properly initialized, so shut it down and don't run */
     UserApp1_StateMachine = UserApp1SM_Error;
   }
+   
 
 } /* end UserApp1Initialize() */
 
@@ -126,7 +127,50 @@ void UserApp1RunActiveState(void)
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Private functions                                                                                                  */
 /*--------------------------------------------------------------------------------------------------------------------*/
+static void BuzzerRun(void)
+{
+  static u32 u32BuzzerTimer = 0;
+  u32BuzzerTimer++;
+  if ( u32BuzzerTimer == 10)
+  {
+    AT91C_BASE_PIOA ->PIO_SODR = PA_28_BUZZER1;
+  }
+  
+  else if( u32BuzzerTimer == 20)
+  {
+    AT91C_BASE_PIOA ->PIO_CODR = PA_28_BUZZER1;
+    u32BuzzerTimer = 0;
+  }
+}
 
+static void TurnOnLed(void)
+{
+  if ( AT91C_BASE_PIOB ->PIO_PDSR & PB_00_BUTTON1)
+  {  
+    AT91C_BASE_PIOB ->PIO_CODR = PB_18_LED_BLU;
+  }
+  
+  else
+  {
+    AT91C_BASE_PIOB ->PIO_SODR = PB_18_LED_BLU;
+  }
+}
+
+static void TurnOnBuzzer(void)
+{
+  static u32 u32BuzzerTimer_1ms = 0;
+  if ( AT91C_BASE_PIOB ->PIO_PDSR & PB_01_BUTTON2 )
+  {
+    AT91C_BASE_PIOA ->PIO_CODR = PA_28_BUZZER1;
+  }
+  
+  else
+  {
+    BuzzerRun();
+    
+
+  }
+}
 
 /**********************************************************************************************************************
 State Machine Function Definitions
@@ -136,20 +180,83 @@ State Machine Function Definitions
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
 {
-  u32 u32A;
-  if ( !(AT91C_BASE_PIOB ->PIO_PDSR & PB_00_BUTTON1) )
+
+   static u32 u32LedToggleTimer         = 0;       //Set the timer for LedToggle
+   static u32 u32BuzzerFreqencyTimer    = 0;       //Set a timer that controls the frequency of beepper
+   static bool bLedBLUE                 = FALSE;   //A bool that shows which LED is ON
+   static bool bIsBuzzerHigh            = FALSE;   //A bool that shows the current state of beeper
+   
+   /*Enable PIO of BUZZER1*/
+   AT91C_BASE_PIOA->PIO_PER = PA_28_BUZZER1;
+   
+   /*Check if BUTTON1 is pressed*/
+   if ( AT91C_BASE_PIOB ->PIO_PDSR & PB_00_BUTTON1)
+   {
+    /*If button is not pressed, close the LEDs.*/
+    AT91C_BASE_PIOB ->PIO_CODR = PB_18_LED_BLU;
+    AT91C_BASE_PIOB ->PIO_CODR = PB_13_LED_WHT;
+   } 
+ 
+   else
   {
-    if( AT91C_BASE_PIOB ->PIO_ODSR & PB_18_LED_BLU)
+    /*When button is pressed, timers begin to count.*/
+    u32LedToggleTimer++;
+    u32BuzzerFreqencyTimer++;
+    
+    /*Check which LED is ON*/
+    if (bLedBLUE == FALSE) 
     {
-      AT91C_BASE_PIOB ->PIO_CODR = PB_18_LED_BLU;
+     
+      /*We assume that the blue LED turns on first, so the original state is FALSE.
+        We use the bool two toggle white and blue LED.*/
+      
+      AT91C_BASE_PIOB ->PIO_SODR = PB_18_LED_BLU;
+      AT91C_BASE_PIOB ->PIO_CODR = PB_13_LED_WHT;
+      if (u32LedToggleTimer == 500)
+      {
+        /*When time is up, reset the timer and turn to white LED.*/
+        bLedBLUE = TRUE;
+        u32LedToggleTimer = 0;
+      }
     }
     
-    else
+    if (bLedBLUE == TRUE)
     {
-      AT91C_BASE_PIOB ->PIO_SODR = PB_18_LED_BLU;
+      AT91C_BASE_PIOB ->PIO_SODR = PB_13_LED_WHT;
+      AT91C_BASE_PIOB ->PIO_CODR = PB_18_LED_BLU;
+      
+       if (u32LedToggleTimer == 500)
+      {
+        bLedBLUE = FALSE;
+        u32LedToggleTimer = 0;
+      }
     }
+    
+    if (bIsBuzzerHigh == FALSE)
+    {
+        AT91C_BASE_PIOA->PIO_SODR = PA_28_BUZZER1;
+        if (u32BuzzerFreqencyTimer == 2)
+        {
+          bIsBuzzerHigh = TRUE;
+          u32BuzzerFreqencyTimer = 0;
+        }
+    }
+    
+    if (bIsBuzzerHigh == TRUE)
+    {
+      AT91C_BASE_PIOA->PIO_CODR = PA_28_BUZZER1;
+      if (u32BuzzerFreqencyTimer == 2)
+        {
+          bIsBuzzerHigh = FALSE;
+          u32BuzzerFreqencyTimer = 0;
+        }
+      
+    }
+    
+    
   }
- 
+   
+   
 } /* end UserApp1SM_Idle() */
     
 
@@ -157,7 +264,6 @@ static void UserApp1SM_Idle(void)
 /* Handle an error */
 static void UserApp1SM_Error(void)          
 {
-  
 } /* end UserApp1SM_Error() */
 
 

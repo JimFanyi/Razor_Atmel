@@ -226,7 +226,8 @@ Promises:
 void GpioSetup(void)
 {
   /* Set all of the pin function registers in port A */
-  AT91C_BASE_PIOA->PIO_PER    = PIOA_PER_INIT;
+  //AT91C_BASE_PIOA->PIO_PER    = PIOA_PER_INIT;
+  AT91C_BASE_PIOA->PIO_PER    = PA_28_BUZZER1;
   AT91C_BASE_PIOA->PIO_PDR    = PIOA_PDR_INIT;
   AT91C_BASE_PIOA->PIO_OER    = PIOA_OER_INIT;
   AT91C_BASE_PIOA->PIO_ODR    = PIOA_ODR_INIT;
